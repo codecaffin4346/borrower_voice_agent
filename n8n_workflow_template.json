@@ -1,0 +1,138 @@
+{
+  "name": "CredResolve Agentic Voice Callback & Ticket Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "credresolve-agent-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "e2fcf02d-0b6b-4e00-84c1-435e5d36e2d1",
+      "name": "Webhook Listener",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.5,
+      "position": [
+        250,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "value1": "={{ $json.action_type }}",
+              "value2": "Send Payment Link"
+            },
+            {
+              "value1": "={{ $json.action_type }}",
+              "value2": "Create Ticket Alert",
+              "output": 1
+            },
+            {
+              "value1": "={{ $json.action_type }}",
+              "value2": "Schedule Callback",
+              "output": 2
+            }
+          ]
+        }
+      },
+      "id": "3af4bc6f-124b-449e-b7d6-c1648a73fe91",
+      "name": "Route Action Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        480,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "🚨 *CredResolve Payment Link Dispatched*\n\n*Borrower ID:* {{ $json.payload.borrower_id }}\n*Amount:* INR {{ $json.payload.amount }}\n*Link:* {{ $json.payload.link }}\n\n_Auto-triggered by Voice Agent Tool._"
+      },
+      "id": "ca1d560c-255d-4f18-bb65-5b4cf5d5d852",
+      "name": "Notify Payment Link",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "servicing-tickets",
+        "text": "🎫 *New Support Ticket Created*\n\n*Ticket ID:* {{ $json.payload.ticket_id }}\n*Category:* {{ $json.payload.category }}\n*Title:* {{ $json.payload.title }}\n\n_Assigned to Support Desk Queue._"
+      },
+      "id": "18cfd14e-d69c-49cf-8984-7a1cd1f53d10",
+      "name": "Slack Alert - Ticket",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "calendarId": "primary",
+        "summary": "📞 Follow-up Call: Borrower {{ $json.payload.borrower_id }}",
+        "description": "Voice agent scheduled callback. Borrower requested callbacks on or around: {{ $json.payload.time }}.",
+        "start": "={{ $now.plus({days: 1}).toISO() }}",
+        "end": "={{ $now.plus({days: 1, hours: 1}).toISO() }}"
+      },
+      "id": "97adfc3c-74f4-4db6-9e67-d86cf51c720a",
+      "name": "Schedule Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Listener": {
+      "main": [
+        [
+          {
+            "node": "Route Action Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action Type": {
+      "main": [
+        [
+          {
+            "node": "Notify Payment Link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Alert - Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Schedule Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "bb2345e6-9921-4f12-bd78-cf5b42d72f10",
+  "id": "12"
+}

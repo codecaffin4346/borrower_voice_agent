@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+dist/
+.vite/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local database
+backend/database.db
+
+# Secrets & Local Configurations
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.local
+.DS_Store
+Thumbs.db
